@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser'
 import { rateLimit } from 'express-rate-limit'
 import helmet from 'helmet'
 import { csrfSync } from 'csrf-sync'
+import { normalizeTag } from './lib/util.js'
 import { renderPage, renderList } from './lib/render.js'
 import { jobs, filterJobs } from './lib/jobs.js'
 import { createSession, getSession, updateFilter, attachStream } from './lib/sessions.js'
@@ -43,6 +44,7 @@ app.use(helmet({
     directives: {
       'default-src': ["'self'"],
       'connect-src': ["'self'"],
+      'script-src': ["'self'"],
       'object-src': ["'none'"],
       'base-uri': ["'none'"],
       'form-action': ["'self'"]
@@ -80,19 +82,16 @@ app.all('/search', csrfSynchronisedProtection, (req, res) => {
   const sid = req.cookies.sid
   if (!sid || !getSession(sid)) return res.status(400).send('Bad session')
 
+  const { q = '', tag } = req.body
+  const selectedTags = normalizeTag(tag)
+
   // ----- JS‑enhanced path
   if (req.is('json')) {
-    const { q = '', tag } = req.body
-    let selectedTags = tag
-    if (tag && typeof tag === 'string') selectedTags = [tag]
     updateFilter(sid, { q, selectedTags })
     return res.status(204).end() // no payload
   }
 
   // ----- Non‑JS form path
-  const { q = '', tag } = req.body
-  let selectedTags = tag || []
-  if (tag && typeof tag === 'string') selectedTags = [tag]
   const subset = filterJobs(q, selectedTags)
   const html = renderPage(renderList(subset), q, selectedTags, getSession(sid).csrfToken)
   res.type('html').send(html)
