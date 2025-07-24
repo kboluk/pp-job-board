@@ -46,6 +46,7 @@ app.use(helmet({
     directives: {
       'default-src': ["'self'"],
       'connect-src': ["'self'"],
+      'style-src': ["'self'", 'https://unpkg.com'],
       'script-src': ["'self'"],
       'object-src': ["'none'"],
       'base-uri': ["'none'"],
