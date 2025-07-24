@@ -1,0 +1,30 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: development   # ← keeps dev deps
+    volumes:
+      # Mount source for live edit / nodemon restart
+      - .:/home/node/app
+      # Persist node_modules from build stage separately
+      - app_node_modules:/home/node/app/node_modules
+    command: "npx nodemon index.js"   # auto‑reload on change
+    environment:
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "3443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+
+volumes:
+  app_node_modules:

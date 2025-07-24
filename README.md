@@ -34,6 +34,20 @@ A tiny Express + SSE demo that shows how to:
 
 ---
 
+## ⚙️ Daily development loop
+
+We run **everything inside Docker**, even during development, so that TLS, cookies (`Secure` always on), and proxy behaviour match production byte‑for‑byte.
+
+```bash
+# Hot‑reload dev stack
+docker compose -f docker-compose.dev.yml up --build
+
+# Stop / prune
+docker compose -f docker-compose.dev.yml down
+```
+
+---
+
 ## 🚀 Quick start
 
 > **Prerequisites**  
