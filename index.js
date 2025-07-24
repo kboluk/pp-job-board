@@ -8,8 +8,6 @@ import { renderPage, renderList } from './lib/render.js'
 import { jobs, filterJobs } from './lib/jobs.js'
 import { createSession, getSession, updateFilter, attachStream } from './lib/sessions.js'
 
-const isProd = process.env.NODE_ENV === 'production'
-
 const {
   generateToken,
   csrfSynchronisedProtection
@@ -40,6 +38,7 @@ const limiter = rateLimit({
 })
 
 const app = express()
+app.set('trust proxy', true)
 app.use(cookieParser())
 app.use(helmet({
   contentSecurityPolicy: {
@@ -69,7 +68,7 @@ app.get('/', (req, res) => {
     req.sid = sid
     // force creating the csrf token on session init so it doesn't try to read from state
     generateToken(req, true)
-    res.cookie('sid', sid, { httpOnly: true, sameSite: 'strict', secure: isProd })
+    res.cookie('sid', sid, { httpOnly: true, sameSite: 'strict', secure: true })
   }
 
   const html = renderPage(renderList(jobs), undefined, undefined, getSession(sid).csrfToken) // initial page
