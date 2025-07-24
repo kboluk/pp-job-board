@@ -8,6 +8,8 @@ import { renderPage, renderList } from './lib/render.js'
 import { jobs, filterJobs } from './lib/jobs.js'
 import { createSession, getSession, updateFilter, attachStream } from './lib/sessions.js'
 
+const isProd = process.env.NODE_ENV === 'production'
+
 const {
   generateToken,
   csrfSynchronisedProtection
@@ -66,7 +68,7 @@ app.get('/', (req, res) => {
     req.sid = sid
     // force creating the csrf token on session init so it doesn't try to read from state
     generateToken(req, true)
-    res.cookie('sid', sid, { httpOnly: true, sameSite: 'strict', secure: true })
+    res.cookie('sid', sid, { httpOnly: true, sameSite: 'strict', secure: isProd })
   }
 
   const html = renderPage(renderList(jobs), undefined, undefined, getSession(sid).csrfToken) // initial page
@@ -130,6 +132,13 @@ app.get('/events', (req, res) => {
 
   sess.bus.on('update', pushResults)
   res.on('close', () => sess.bus.off('update', pushResults))
+})
+
+app.use((err, req, _, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    console.warn('CSRF validation failed', { sid: req.cookies.sid, ip: req.ip })
+  }
+  next(err)
 })
 
 app.listen(process.env.PORT ?? 3000)
