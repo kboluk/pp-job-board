@@ -25,6 +25,7 @@ A tiny Express + SSE demo that shows how to:
 ├─ public/
 │  ├─ style.css          # tiny add‑on to Chota
 │  └─ app.js             # browser JS (SSE + fetch)
+├─ index.js              # express server
 ├─ nginx.conf            # reverse‑proxy & TLS termination
 ├─ docker-compose.yml
 ├─ Dockerfile

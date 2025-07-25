@@ -1,7 +1,5 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
-import { rateLimit } from 'express-rate-limit'
-import helmet from 'helmet'
 import { csrfSync } from 'csrf-sync'
 import { normalizeTag } from './lib/util.js'
 import { renderPage, renderList } from './lib/render.js'
@@ -30,33 +28,11 @@ const {
   }
 })
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
-  standardHeaders: 'draft-8', // use combined `RateLimit` header
-  legacyHeaders: true // add legacy headers for compatibility
-})
-
 const app = express()
 app.set('trust proxy', true)
 app.use(cookieParser())
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      'default-src': ["'self'"],
-      'connect-src': ["'self'"],
-      'style-src': ["'self'", 'https://unpkg.com'],
-      'script-src': ["'self'"],
-      'object-src': ["'none'"],
-      'base-uri': ["'none'"],
-      'form-action': ["'self'"]
-    }
-  }
-}))
-app.use(limiter)
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
-app.use(express.static('public', { fallthrough: true }))
 
 // ———————————————————————————————
 // 1.  Home page – issues a session cookie if absent
