@@ -1,0 +1,11 @@
+{
+  "ci": {
+    "collect": {
+      "url": ["https://localhost:3443"],
+      "numberOfRuns": 1
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}
