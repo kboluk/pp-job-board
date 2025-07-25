@@ -209,6 +209,7 @@ docker compose -f docker-compose.dev.yml up --build
 2. Create a feature branch.
 3. Run `npm run lint` and `npm test` before PR.
 4. Open your pull request—CI will build the Docker image and run integration tests (SSE + CSRF).
+5. Lighthouse audits run in CI via `.lighthouserc.json` against the HTTPS Nginx front-end, uploading the results to Google's temporary public storage.
 
 Enjoy hacking on a truly tiny yet secure full‑stack app!
 

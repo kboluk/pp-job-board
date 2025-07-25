@@ -1,0 +1,14 @@
+{
+  "ci": {
+    "collect": {
+      "url": ["https://localhost:3443"],
+      "numberOfRuns": 3,
+      "settings": {
+        "chromeFlags": "--ignore-certificate-errors"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}
