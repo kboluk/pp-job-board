@@ -51,10 +51,12 @@ docker compose -f docker-compose.dev.yml down
 
 ## 🚀 Quick start
 
-> **Prerequisites**  
+> **Prerequisites**
 > Docker ≥ 24
-> 
+>
 > Docker Compose v2 (bundled with Docker Desktop / recent Engine)
+>
+> Node.js 20.x
 
 ### 1. Generate a local certificate _(once per machine)_
 
