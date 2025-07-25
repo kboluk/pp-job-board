@@ -4,7 +4,7 @@ A tiny Express + SSE demo that shows how to:
 
 * **Progressive enhancement** – full‑function HTML when JavaScript is off; instant refinements (live search, tag filters) when it’s on.
 * **Minimal dependencies** – framework‑agnostic UI (Chota ≈ 10 KB), zero front‑end build steps.
-* **Strong security posture** – CSP without `'unsafe-inline'`, SameSite Strict cookies, CSRF tokens via `csrf-sync`, HTTPS even in dev.
+* **Strong security posture** – Nginx sets CSP without 'unsafe-inline', serves static files and enforces rate limits; SameSite Strict cookies, CSRF tokens via `csrf-sync`, HTTPS even in dev.
 * **Server‑Sent Events** – stateless live updates powered by Node streams.
 * **Clean Docker workflow** – one `Dockerfile` + Nginx sidecar for local TLS and eventual prod parity.
 
@@ -89,6 +89,8 @@ docker compose down
 ## 🔑 Nginx config (recap)
 
 ```nginx
+limit_req_zone $binary_remote_addr zone=req:10m rate=7r/m;
+
 server {
     listen 443 ssl;
     server_name localhost;
@@ -96,14 +98,39 @@ server {
     ssl_certificate     /etc/nginx/certs/dev.crt;
     ssl_certificate_key /etc/nginx/certs/dev.key;
 
-    # Main proxy
+    client_max_body_size 2M;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header Permissions-Policy "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header Content-Security-Policy "
+      default-src 'self';
+      connect-src 'self';
+      style-src 'self' https://unpkg.com;
+      img-src 'self' data:;
+      font-src 'self';
+      object-src 'none';
+      base-uri 'none';
+      form-action 'self';
+    " always;
+
+    location ~* \.(?:css|js|woff2?|ico|png|svg)$ {
+        root /usr/share/nginx/html;
+        access_log off;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
     location / {
+        limit_req zone=req burst=20 nodelay;
         proxy_pass http://app:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto https;
     }
 
-    # SSE stream
     location /events {
         proxy_pass          http://app:3000;
         proxy_http_version  1.1;
@@ -112,6 +139,8 @@ server {
         proxy_cache         off;
         proxy_read_timeout  1h;
         chunked_transfer_encoding on;
+        proxy_set_header    Accept-Encoding '';
+        gzip off;
     }
 }
 ```
@@ -125,8 +154,10 @@ server {
 | **Transport** | Local TLS via Nginx; production ready for Let’s Encrypt.                      |
 | **Cookies**   | `HttpOnly; Secure; SameSite=Strict` |
 | **CSRF**      | `csrf-sync` synchroniser token with secret cookie & `x-csrf-token` header.    |
-| **CSP**       | `default-src 'self'`; external CSS whitelisted with SRI; no `unsafe-inline`.  |
+| **CSP**       | Set in Nginx: `default-src 'self'`; external CSS whitelisted with SRI; no `unsafe-inline`.  |
 | **XSS**       | Output escaped with `html‑escaper`; URLs validated server‑side.               |
+| **Rate limiting** | `limit_req` in Nginx restricts clients to 7 req/min (burst 20). |
+| **Static files** | Served by Nginx with 30d immutable cache. |
 
 ---
 
