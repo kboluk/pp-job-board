@@ -3,7 +3,6 @@ import assert from 'node:assert/strict'
 import { renderJob, renderList, renderPage } from '../lib/render.js'
 import { tags } from '../lib/jobs.js'
 
-
 test('renderJob escapes HTML', () => {
   const job = {
     title: '<b>Dev</b>',
@@ -18,7 +17,6 @@ test('renderJob escapes HTML', () => {
   assert.ok(html.includes('href="https://example.com"'))
 })
 
-
 test('renderList renders all jobs and count', () => {
   const jobs = [
     { title: 'A', company: 'B', location: 'C', url: 'https://a.com' },
@@ -31,7 +29,6 @@ test('renderList renders all jobs and count', () => {
   assert.ok(html.includes('2 jobs'))
 })
 
-
 test('renderPage includes content, query, csrf token and checked tag', () => {
   const content = '<p>body</p>'
   const q = 'search text'
@@ -39,7 +36,7 @@ test('renderPage includes content, query, csrf token and checked tag', () => {
   const token = '123'
   const html = renderPage(content, q, selected, token)
   assert.ok(html.includes(content))
-  assert.ok(html.includes(`value=\"${q}\"`))
-  assert.ok(html.includes(`value=\"${token}\"`))
+  assert.ok(html.includes(`value="${q}"`))
+  assert.ok(html.includes(`value="${token}"`))
   assert.ok(html.includes('type="checkbox" checked'))
 })
