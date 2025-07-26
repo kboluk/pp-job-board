@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard",
-    "test": "node --test"
+    "test": "node --test \"**/*.test.js\""
   },
   "engines": {
     "node": "20.x"
