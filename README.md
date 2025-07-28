@@ -32,19 +32,26 @@ A tiny Express + SSE demo that shows how to:
 ```
 
 .
-├─ data/                 # sample JSON data source
+├─ data/                     # sample JSON data source
 │  └─ jobs.sample.json
-├─ lib/
-│  ├─ jobs.js            # data loading & sanitisation
-│  ├─ render.js          # server‑side HTML templates
-│  ├─ sessions.js        # session state management
+├─ lib/                      # server modules
+│  ├─ jobs.js
+│  ├─ render.js
+│  ├─ sessions.js
 │  └─ util.js
 ├─ public/
-│  ├─ style.css          # tiny add‑on to Chota
-│  └─ app.js             # browser JS (SSE + fetch)
+│  ├─ style.css              # tiny add‑on to Chota
+│  └─ app.js                 # browser JS (SSE + fetch)
 ├─ index.js              # express server
-├─ nginx.conf            # reverse‑proxy & TLS termination
-├─ docker-compose.yml
+├─ docs/                     # screenshots & gifs
+├─ test/                     # unit tests
+├─ e2e/                      # Playwright specs
+├─ docker-compose.yml        # base stack (app + nginx)
+├─ docker-compose.dev.yml    # hot‑reload variant
+├─ docker-compose.prod.yml   # hardened prod stack
+├─ nginx.conf                # dev proxy
+├─ nginx.prod.conf           # production proxy
+├─ .github/workflows/ci.yml  # CI pipeline
 ├─ Dockerfile
 └─ README.md
 
@@ -108,15 +115,22 @@ docker compose down
 ## 🔑 Nginx config (recap)
 
 ```nginx
-limit_req_zone $binary_remote_addr zone=req:10m rate=7r/m;
+limit_req_zone $binary_remote_addr zone=req:10m rate=15r/m;  # 60r/m in prod
+server {
+    listen 80;
+    return 301 https://$host$request_uri;
+}
+
 
 server {
     listen 443 ssl;
     server_name localhost;
+    # prod: real IP headers + HTTP→HTTPS redirect
 
     ssl_certificate     /etc/nginx/certs/dev.crt;
     ssl_certificate_key /etc/nginx/certs/dev.key;
 
+    gzip on;
     client_max_body_size 2M;
 
     add_header X-Content-Type-Options nosniff always;
@@ -138,7 +152,7 @@ server {
     location ~* \.(?:css|js|woff2?|ico|png|svg)$ {
         root /usr/share/nginx/html;
         access_log off;
-        expires 30d;
+        expires 1y;
         add_header Cache-Control "public, immutable";
         try_files $uri =404;
     }
@@ -175,8 +189,8 @@ server {
 | **CSRF**      | `csrf-sync` synchroniser token with secret cookie & `x-csrf-token` header.    |
 | **CSP**       | Set in Nginx: `default-src 'self'`; external CSS whitelisted with SRI; no `unsafe-inline`.  |
 | **XSS**       | Output escaped with `html‑escaper`; URLs validated server‑side.               |
-| **Rate limiting** | `limit_req` in Nginx restricts clients to 7 req/min (burst 20). |
-| **Static files** | Served by Nginx with 30d immutable cache. |
+| **Rate limiting** | `limit_req` in Nginx allows 15 req/min locally (60 in production) with a burst of 20. |
+| **Static files** | Served by Nginx with 1y immutable cache. |
 
 ---
 
