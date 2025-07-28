@@ -10,6 +10,8 @@ A tiny Express + SSE demo that shows how to:
 
 ## Demo
 
+Current demo is deployed at [https://pp.kaan.io](https://pp.kaan.io). It lives on a digital ocean droplet and it is behind cloudflare dns proxy. This setup requires some alterations to the setup (like modifying the request limits, using proper certs etc) and they are handled in the `*.prod.*` files
+
 <p align="center">
   <img src="docs/media/screenshot-home.png" alt="Job board home" width="700">
 </p>
@@ -284,16 +286,3 @@ docker compose -f docker-compose.prod.yml up --build -d
 
 Nginx listens on ports 80 and 443 while the app runs on port 3000 in production
 mode.
-
----
-
-## 🙌 Contributing
-
-1. Fork & clone.
-2. Create a feature branch.
-3. Run `npm run lint` and `npm test` before PR.
-4. Open your pull request—CI will build the Docker image and run integration tests (SSE + CSRF).
-5. Lighthouse audits run in CI via `.lighthouserc.json` against the HTTPS Nginx front-end, uploading the results to Google's temporary public storage.
-
-Enjoy hacking on a truly tiny yet secure full‑stack app!
-
