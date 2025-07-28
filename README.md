@@ -220,6 +220,59 @@ docker compose -f docker-compose.dev.yml up --build
 
 ---
 
+## 🧪 Running tests
+
+Lint and test commands run locally without Docker.
+
+```bash
+# Check code style
+npm run lint
+
+# Run unit tests with Node's built-in runner
+npm test
+```
+
+End-to-end tests rely on the dev stack. Start it in another terminal using the
+development compose file, then execute Playwright:
+
+```bash
+# Start the application (hot reload)
+docker compose -f docker-compose.dev.yml up --build
+
+# In a second shell
+npx playwright test
+```
+
+---
+
+## 🔄 Continuous integration
+
+The workflow in `.github/workflows/ci.yml` runs on pull requests and every push
+to `main`. It performs the following steps:
+
+1. Sets up Node.js 20 and installs dependencies with `npm ci`.
+2. Lints the codebase and executes unit tests.
+3. Builds the Docker image and starts the Nginx + Node stack.
+4. Installs Playwright browsers and runs end-to-end tests.
+5. Executes Lighthouse audits using `.lighthouserc.json` (requires the
+   `LHCI_GITHUB_APP_TOKEN` secret).
+
+---
+
+## 🏗️ Production deployment
+
+Update `nginx.prod.conf` with your real domain and TLS certificate paths, then
+start the hardened compose file:
+
+```bash
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+Nginx listens on ports 80 and 443 while the app runs on port 3000 in production
+mode.
+
+---
+
 ## 🙌 Contributing
 
 1. Fork & clone.
