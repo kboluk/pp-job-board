@@ -1,3 +1,7 @@
+:root {
+  scrollbar-gutter: stable;
+}
+
 ol, ul {
   list-style-type: none;
 }
