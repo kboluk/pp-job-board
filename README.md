@@ -39,8 +39,7 @@ Current demo is deployed at [https://pp.kaan.io](https://pp.kaan.io). It lives o
 ├─ lib/                      # server modules
 │  ├─ jobs.js
 │  ├─ render.js
-│  ├─ sessions.js
-│  └─ util.js
+│  └─ sessions.js
 ├─ public/
 │  ├─ style.css              # tiny add‑on to Chota
 │  └─ app.js                 # browser JS (SSE + fetch)
