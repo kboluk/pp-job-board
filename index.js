@@ -1,7 +1,6 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import { csrfSync } from 'csrf-sync'
-import { normalizeTag } from './lib/util.js'
 import { renderPage, renderList } from './lib/render.js'
 import { jobs, filterJobs } from './lib/jobs.js'
 import { createSession, getSession, updateFilter, attachStream } from './lib/sessions.js'
@@ -61,7 +60,8 @@ app.all('/search', csrfSynchronisedProtection, (req, res) => {
   if (!sid || !getSession(sid)) return res.status(400).send('Bad session')
 
   const { q = '', tag } = req.body
-  const selectedTags = normalizeTag(tag)
+  let selectedTags = tag || []
+  if (tag && typeof tag === 'string') selectedTags = [tag]
 
   // ----- JS‑enhanced path
   if (req.is('json')) {

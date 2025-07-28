@@ -10,6 +10,8 @@ A tiny Express + SSE demo that shows how to:
 
 ## Demo
 
+Current demo is deployed at [https://pp.kaan.io](https://pp.kaan.io). It lives on a digital ocean droplet and it is behind cloudflare dns proxy. This setup requires some alterations to the setup (like modifying the request limits, using proper certs etc) and they are handled in the `*.prod.*` files
+
 <p align="center">
   <img src="docs/media/screenshot-home.png" alt="Job board home" width="700">
 </p>
@@ -32,19 +34,25 @@ A tiny Express + SSE demo that shows how to:
 ```
 
 .
-├─ data/                 # sample JSON data source
+├─ data/                     # sample JSON data source
 │  └─ jobs.sample.json
-├─ lib/
-│  ├─ jobs.js            # data loading & sanitisation
-│  ├─ render.js          # server‑side HTML templates
-│  ├─ sessions.js        # session state management
-│  └─ util.js
+├─ lib/                      # server modules
+│  ├─ jobs.js
+│  ├─ render.js
+│  └─ sessions.js
 ├─ public/
-│  ├─ style.css          # tiny add‑on to Chota
-│  └─ app.js             # browser JS (SSE + fetch)
+│  ├─ style.css              # tiny add‑on to Chota
+│  └─ app.js                 # browser JS (SSE + fetch)
 ├─ index.js              # express server
-├─ nginx.conf            # reverse‑proxy & TLS termination
-├─ docker-compose.yml
+├─ docs/                     # screenshots & gifs
+├─ test/                     # unit tests
+├─ e2e/                      # Playwright specs
+├─ docker-compose.yml        # base stack (app + nginx)
+├─ docker-compose.dev.yml    # hot‑reload variant
+├─ docker-compose.prod.yml   # hardened prod stack
+├─ nginx.conf                # dev proxy
+├─ nginx.prod.conf           # production proxy
+├─ .github/workflows/ci.yml  # CI pipeline
 ├─ Dockerfile
 └─ README.md
 
@@ -108,15 +116,22 @@ docker compose down
 ## 🔑 Nginx config (recap)
 
 ```nginx
-limit_req_zone $binary_remote_addr zone=req:10m rate=7r/m;
+limit_req_zone $binary_remote_addr zone=req:10m rate=15r/m;  # 60r/m in prod
+server {
+    listen 80;
+    return 301 https://$host$request_uri;
+}
+
 
 server {
     listen 443 ssl;
     server_name localhost;
+    # prod: real IP headers + HTTP→HTTPS redirect
 
     ssl_certificate     /etc/nginx/certs/dev.crt;
     ssl_certificate_key /etc/nginx/certs/dev.key;
 
+    gzip on;
     client_max_body_size 2M;
 
     add_header X-Content-Type-Options nosniff always;
@@ -138,7 +153,7 @@ server {
     location ~* \.(?:css|js|woff2?|ico|png|svg)$ {
         root /usr/share/nginx/html;
         access_log off;
-        expires 30d;
+        expires 1y;
         add_header Cache-Control "public, immutable";
         try_files $uri =404;
     }
@@ -175,8 +190,8 @@ server {
 | **CSRF**      | `csrf-sync` synchroniser token with secret cookie & `x-csrf-token` header.    |
 | **CSP**       | Set in Nginx: `default-src 'self'`; external CSS whitelisted with SRI; no `unsafe-inline`.  |
 | **XSS**       | Output escaped with `html‑escaper`; URLs validated server‑side.               |
-| **Rate limiting** | `limit_req` in Nginx restricts clients to 7 req/min (burst 20). |
-| **Static files** | Served by Nginx with 30d immutable cache. |
+| **Rate limiting** | `limit_req` in Nginx allows 15 req/min locally (60 in production) with a burst of 20. |
+| **Static files** | Served by Nginx with 1y immutable cache. |
 
 ---
 
@@ -220,13 +235,53 @@ docker compose -f docker-compose.dev.yml up --build
 
 ---
 
-## 🙌 Contributing
+## 🧪 Running tests
 
-1. Fork & clone.
-2. Create a feature branch.
-3. Run `npm run lint` and `npm test` before PR.
-4. Open your pull request—CI will build the Docker image and run integration tests (SSE + CSRF).
-5. Lighthouse audits run in CI via `.lighthouserc.json` against the HTTPS Nginx front-end, uploading the results to Google's temporary public storage.
+Lint and test commands run locally without Docker.
 
-Enjoy hacking on a truly tiny yet secure full‑stack app!
+```bash
+# Check code style
+npm run lint
 
+# Run unit tests with Node's built-in runner
+npm test
+```
+
+End-to-end tests rely on the dev stack. Start it in another terminal using the
+development compose file, then execute Playwright:
+
+```bash
+# Start the application (hot reload)
+docker compose -f docker-compose.dev.yml up --build
+
+# In a second shell
+npx playwright test
+```
+
+---
+
+## 🔄 Continuous integration
+
+The workflow in `.github/workflows/ci.yml` runs on pull requests and every push
+to `main`. It performs the following steps:
+
+1. Sets up Node.js 20 and installs dependencies with `npm ci`.
+2. Lints the codebase and executes unit tests.
+3. Builds the Docker image and starts the Nginx + Node stack.
+4. Installs Playwright browsers and runs end-to-end tests.
+5. Executes Lighthouse audits using `.lighthouserc.json` (requires the
+   `LHCI_GITHUB_APP_TOKEN` secret).
+
+---
+
+## 🏗️ Production deployment
+
+Update `nginx.prod.conf` with your real domain and TLS certificate paths, then
+start the hardened compose file:
+
+```bash
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+Nginx listens on ports 80 and 443 while the app runs on port 3000 in production
+mode.
