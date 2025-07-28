@@ -8,7 +8,24 @@ A tiny Express + SSE demo that shows how to:
 * **Server‑Sent Events** – stateless live updates powered by Node streams.
 * **Clean Docker workflow** – one `Dockerfile` + Nginx sidecar for local TLS and eventual prod parity.
 
----
+## Demo
+
+<p align="center">
+  <img src="docs/media/screenshot-home.png" alt="Job board home" width="700">
+</p>
+
+### Instant search (JS enabled)
+
+<p align="center">
+  <img src="docs/media/demo-instant-search.gif" alt="Instant search with HTMX" width="700">
+</p>
+
+### Baseline experience (JS disabled)
+
+<p align="center">
+  <img src="docs/media/demo-no-js.gif" alt="Full-page reload fallback" width="700">
+</p>
+
 
 ## 🗂 Repository layout
 
